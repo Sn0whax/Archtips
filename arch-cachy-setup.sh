@@ -51,7 +51,7 @@ PLASMA_PACKAGES=(
 KERNEL_PACKAGES=(cachyos-settings cachyos-hello linux-cachyos linux-cachyos-headers proton-cachyos-slr wine-cachyos)
 USER_PACKAGES=(
   systemd-boot-manager python-pynvml fish alsa-utils btop cava xorg-xwininfo
-  unimatrix ttf-migu ttf-hack-nerd ttf-baekmuk obs-studio brave-origin-bin
+  steam ttf-migu ttf-hack-nerd ttf-baekmuk obs-studio brave-origin-bin
   discord mpv audacious haruna signal-desktop lact faugus-launcher
   phonon-qt6-mpv-git yt-dlp apparmor cifs-utils
 )
