@@ -60,7 +60,7 @@ SETUP_NAS=no ./arch-cachy-setup.sh
 Configure a different NAS share:
 
 ```bash
-NAS_SHARE='//192.168.1.10/dox' NAS_MOUNT='/mnt/nas' SETUP_NAS=yes ./arch-cachy-setup.sh
+NAS_SHARE='//192.168.1.1/stuff' NAS_MOUNT='/mnt/nas' SETUP_NAS=yes ./arch-cachy-setup.sh
 ```
 
 Install or skip the NVIDIA open kernel module without prompting:
