@@ -45,7 +45,7 @@ install_available() {
 }
 
 PLASMA_PACKAGES=(
-  plasma-meta sddm konsole dolphin ark kate spectacle
+  plasma-meta plasma-login-manager konsole dolphin ark kate spectacle
   xdg-desktop-portal-kde networkmanager pipewire pipewire-alsa pipewire-pulse wireplumber
 )
 KERNEL_PACKAGES=(cachyos-settings cachyos-hello linux-cachyos linux-cachyos-headers proton-cachyos-slr wine-cachyos)
@@ -68,7 +68,7 @@ fi
 [[ "$INSTALL_NVIDIA_OPEN" == yes ]] && install_available linux-cachyos-nvidia-open
 
 log "Enabling desktop and security services"
-sudo systemctl enable NetworkManager.service sddm.service apparmor.service
+sudo systemctl enable NetworkManager.service plasmalogin.service apparmor.service
 # LACT supplies this service on current packages; do not fail if its name changes.
 sudo systemctl enable lactd.service 2>/dev/null || warn "lactd.service was not found; configure LACT manually if needed."
 
