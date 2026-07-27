@@ -67,7 +67,24 @@ if [[ "$INSTALL_NVIDIA_OPEN" == ask ]]; then
 fi
 [[ "$INSTALL_NVIDIA_OPEN" == yes ]] && install_available linux-cachyos-nvidia-open
 
-log "Enabling desktop and security services"
+log "Enabling AppArmor profile caching"
+sudo install -d -m 0755 /etc/apparmor/earlypolicy
+for directive in \
+  'write-cache' \
+  'Optimize=compress-fast' \
+  'cache-loc /etc/apparmor/earlypolicy/'
+do
+  sudo grep -qxF "$directive" /etc/apparmor/parser.conf || printf '%s\n' "$directive" | sudo tee -a /etc/apparmor/parser.conf >/dev/null
+done
+
+log "Configuring systemd-boot kernel parameters"
+linux_options='LINUX_OPTIONS="zswap.enabled=0 nowatchdog nmi_watchdog=0 split_lock_detect=off lsm=landlock,lockdown,yama,integrity,apparmor,bpf"'
+if sudo grep -qE '^[#[:space:]]*LINUX_OPTIONS=' /etc/sdboot-manage.conf; then
+  sudo sed -Ei "s|^[#[:space:]]*LINUX_OPTIONS=.*|${linux_options}|" /etc/sdboot-manage.conf
+else
+  printf '%s\n' "$linux_options" | sudo tee -a /etc/sdboot-manage.conf >/dev/null
+fi
+sudo sdboot-manage genlog "Enabling desktop and security services"
 sudo systemctl enable NetworkManager.service plasmalogin.service apparmor.service
 # LACT supplies this service on current packages; do not fail if its name changes.
 sudo systemctl enable lactd.service 2>/dev/null || warn "lactd.service was not found; configure LACT manually if needed."
