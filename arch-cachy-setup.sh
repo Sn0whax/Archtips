@@ -44,22 +44,27 @@ install_available() {
   ((${#missing[@]})) && warn "Not found in enabled pacman repositories; skipped: ${missing[*]}"
 }
 
-PLASMA_PACKAGES=(
+REQUIRED_PACKAGES=(
   plasma-meta plasma-login-manager konsole dolphin ark kate spectacle
   xdg-desktop-portal-kde networkmanager pipewire pipewire-alsa pipewire-pulse wireplumber
-)
-KERNEL_PACKAGES=(cachyos-settings cachyos-hello linux-cachyos linux-cachyos-headers proton-cachyos-slr wine-cachyos)
-USER_PACKAGES=(
-  systemd-boot-manager python-pynvml fish nano alsa-utils btop cava xorg-xwininfo
-  steam okular kcalc protonup-qt fastfetch ttf-migu ttf-hack-nerd ttf-baekmuk obs-studio brave-origin-bin
-  discord mpv audacious haruna signal-desktop lact faugus-launcher
-  phonon-qt6-mpv-git yt-dlp apparmor cifs-utils ufw
+  systemd-boot-manager zram-generator
+  cachyos-settings cachyos-hello linux-cachyos linux-cachyos-headers
+  python-pynvml fish nano alsa-utils apparmor cifs-utils ufw
 )
 
-log "Installing Plasma, CachyOS kernel, and requested packages"
-install_available "${PLASMA_PACKAGES[@]}"
-install_available "${KERNEL_PACKAGES[@]}"
-install_available "${USER_PACKAGES[@]}"
+OPTIONAL_PACKAGES=(
+  proton-cachyos-slr wine-cachyos btop cava xorg-xwininfo
+  steam okular kcalc protonup-qt fastfetch
+  ttf-migu ttf-hack-nerd ttf-baekmuk obs-studio brave-origin-bin
+  discord mpv audacious haruna signal-desktop lact faugus-launcher
+  phonon-qt6-mpv-git yt-dlp
+)
+
+log "Installing required Plasma, CachyOS kernel, and system packages"
+sudo pacman -S --needed --noconfirm -- "${REQUIRED_PACKAGES[@]}"
+
+log "Installing optional requested packages"
+install_available "${OPTIONAL_PACKAGES[@]}"
 
 if [[ "$INSTALL_NVIDIA_OPEN" == ask ]]; then
   read -r -p "Install linux-cachyos-nvidia-open for a supported NVIDIA GPU? [y/N] " answer
@@ -77,18 +82,31 @@ do
   sudo grep -qxF "$directive" /etc/apparmor/parser.conf || printf '%s\n' "$directive" | sudo tee -a /etc/apparmor/parser.conf >/dev/null
 done
 
-log "Configuring systemd-boot kernel parameters"
-linux_options='LINUX_OPTIONS="zswap.enabled=0 nowatchdog nmi_watchdog=0 split_lock_detect=off lsm=landlock,lockdown,yama,integrity,apparmor,bpf"'
-if sudo grep -qE '^[#[:space:]]*LINUX_OPTIONS=' /etc/sdboot-manage.conf; then
-  sudo sed -Ei "s|^[#[:space:]]*LINUX_OPTIONS=.*|${linux_options}|" /etc/sdboot-manage.conf
+if command -v sdboot-manage >/dev/null 2>&1 && [[ -f /etc/sdboot-manage.conf ]]; then
+  log "Configuring systemd-boot kernel parameters"
+  linux_options='LINUX_OPTIONS="zswap.enabled=0 nowatchdog nmi_watchdog=0 split_lock_detect=off lsm=landlock,lockdown,yama,integrity,apparmor,bpf"'
+  if sudo grep -qE '^[#[:space:]]*LINUX_OPTIONS=' /etc/sdboot-manage.conf; then
+    sudo sed -Ei "s|^[#[:space:]]*LINUX_OPTIONS=.*|${linux_options}|" /etc/sdboot-manage.conf
+  else
+    printf '%s\n' "$linux_options" | sudo tee -a /etc/sdboot-manage.conf >/dev/null
+  fi
+  sudo sdboot-manage gen
 else
-  printf '%s\n' "$linux_options" | sudo tee -a /etc/sdboot-manage.conf >/dev/null
+  warn "sdboot-manage is unavailable; kernel options were not changed."
 fi
-sudo sdboot-manage genlog "Configuring UFW firewall"
+
+log "Configuring UFW firewall"
+sudo systemctl enable ufw.service
 sudo ufw default deny incoming
 sudo ufw default allow outgoing
 sudo ufw --force enable
-sudo systemctl enable ufw.service
+sudo ufw status verbose
+
+log "Removing SDDM if installed"
+if pacman -Q sddm >/dev/null 2>&1; then
+  sudo systemctl disable sddm.service 2>/dev/null || true
+  sudo pacman -Rns --noconfirm sddm || warn "SDDM could not be removed automatically."
+fi
 
 log "Enabling desktop and security services"
 sudo systemctl enable NetworkManager.service plasmalogin.service apparmor.service
