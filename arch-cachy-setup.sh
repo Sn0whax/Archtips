@@ -53,7 +53,7 @@ USER_PACKAGES=(
   systemd-boot-manager python-pynvml fish alsa-utils btop cava xorg-xwininfo
   steam okular kcalc protonup-qt fastfetch ttf-migu ttf-hack-nerd ttf-baekmuk obs-studio brave-origin-bin
   discord mpv audacious haruna signal-desktop lact faugus-launcher
-  phonon-qt6-mpv-git yt-dlp apparmor cifs-utils
+  phonon-qt6-mpv-git yt-dlp apparmor cifs-utils ufw
 )
 
 log "Installing Plasma, CachyOS kernel, and requested packages"
@@ -84,7 +84,13 @@ if sudo grep -qE '^[#[:space:]]*LINUX_OPTIONS=' /etc/sdboot-manage.conf; then
 else
   printf '%s\n' "$linux_options" | sudo tee -a /etc/sdboot-manage.conf >/dev/null
 fi
-sudo sdboot-manage genlog "Enabling desktop and security services"
+sudo sdboot-manage genlog "Configuring UFW firewall"
+sudo ufw default deny incoming
+sudo ufw default allow outgoing
+sudo ufw --force enable
+sudo systemctl enable ufw.service
+
+log "Enabling desktop and security services"
 sudo systemctl enable NetworkManager.service plasmalogin.service apparmor.service
 # LACT supplies this service on current packages; do not fail if its name changes.
 sudo systemctl enable lactd.service 2>/dev/null || warn "lactd.service was not found; configure LACT manually if needed."
