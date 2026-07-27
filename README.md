@@ -77,6 +77,7 @@ INSTALL_NVIDIA_OPEN=no ./arch-cachy-setup.sh
 - Installs the CachyOS kernel and headers
 - Optionally installs `linux-cachyos-nvidia-open`
 - Installs the configured applications using `pacman`
+- Installs and enables UFW with incoming traffic denied by default and outgoing traffic allowed
 - Enables NetworkManager, Plasma Login Manager, AppArmor, and LACT when available
 - Attempts to make the CachyOS systemd-boot entry the default
 - Configures the PowerDevil DDC/CI environment override
